@@ -47,6 +47,7 @@ func main() {
 	usersHandler := users_transport_http.NewUsersHTTPHandler(userService)
 
 	mux.HandleFunc("POST /users", usersHandler.CreateUser)
+	mux.HandleFunc("GET /users/{id}", usersHandler.GetUser)
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)

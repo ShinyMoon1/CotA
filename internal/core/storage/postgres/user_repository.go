@@ -24,3 +24,13 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (int,
 	}
 	return id, nil
 }
+
+func (r *UserRepository) GetUser(ctx context.Context, id int) (domain.User, error) {
+	var user domain.User
+	query := "SELECT id, nick_name, email, created_at FROM CotA.users WHERE id = $1"
+	row := r.db.QueryRowContext(ctx, query, id)
+	if err := row.Scan(&user.ID, &user.Nick_name, &user.Email, &user.CreatedAt); err != nil {
+		return domain.User{}, fmt.Errorf("get user: %w", err)
+	}
+	return user, nil
+}

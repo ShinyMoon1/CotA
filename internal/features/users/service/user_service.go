@@ -10,6 +10,7 @@ import (
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user domain.User) (int, error)
+	GetUser(ctx context.Context, id int) (domain.User, error)
 }
 
 type UserService struct {
@@ -42,4 +43,15 @@ func (s *UserService) CreateUser(ctx context.Context, user domain.User) (int, er
 		return 0, err
 	}
 	return id, nil
+}
+
+func (s *UserService) GetUser(ctx context.Context, id int) (domain.User, error) {
+	if id <= 0 {
+		return domain.User{}, errors.New("invalid user id")
+	}
+	user, err := s.userRepo.GetUser(ctx, id)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return user, nil
 }
