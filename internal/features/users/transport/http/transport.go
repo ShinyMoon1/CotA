@@ -14,8 +14,8 @@ type UsersService interface {
 	GetUser(ctx context.Context, id int) (domain.User, error)
 }
 
-func NewUsersHTTPHandler(usersServise UsersService) *UsersHTTPHandler {
+func NewUsersHTTPHandler(usersServiсe UsersService) *UsersHTTPHandler {
 	return &UsersHTTPHandler{
-		usersService: usersServise,
+		usersService: usersServiсe,
 	}
 }

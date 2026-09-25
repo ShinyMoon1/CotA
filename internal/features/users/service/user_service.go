@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"dayliki/internal/core/domain"
 	"errors"
 
+	"dayliki/internal/core/domain"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,10 +15,11 @@ type UserRepository interface {
 
 type UserService struct {
 	userRepo UserRepository
+	pool     *Pool
 }
 
-func NewUserService(userRepo UserRepository) *UserService {
-	return &UserService{userRepo: userRepo}
+func NewUserService(userRepo UserRepository, pool *Pool) *UserService {
+	return &UserService{userRepo: userRepo, pool: pool}
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user domain.User) (int, error) {
@@ -42,6 +43,11 @@ func (s *UserService) CreateUser(ctx context.Context, user domain.User) (int, er
 	if err != nil {
 		return 0, err
 	}
+
+	if s.pool == nil {
+		return 0, errors.New("error to submit job")
+	}
+	s.pool.Submit(UserRegistered{UserID: id})
 	return id, nil
 }
 

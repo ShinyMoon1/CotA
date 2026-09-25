@@ -2,10 +2,11 @@ package service_test
 
 import (
 	"context"
-	"dayliki/internal/core/domain"
-	"dayliki/internal/features/users/service"
 	"errors"
 	"testing"
+
+	"dayliki/internal/core/domain"
+	"dayliki/internal/features/users/service"
 )
 
 type fakeUserRepo struct {
@@ -23,7 +24,9 @@ func (f *fakeUserRepo) GetUser(ctx context.Context, id int) (domain.User, error)
 
 func TestCreateUser(t *testing.T) {
 	fake := &fakeUserRepo{createdFunc: func(ctx context.Context, user domain.User) (int, error) { return 1, nil }}
-	svc := service.NewUserService(fake)
+	pool := service.NewPool(10, func(ctx context.Context, job service.UserRegistered) error { return nil })
+
+	svc := service.NewUserService(fake, pool)
 
 	tests := []struct {
 		name    string
@@ -36,6 +39,8 @@ func TestCreateUser(t *testing.T) {
 		{"empty email", domain.User{Nick_name: "ivan", Password: "secret"}, 0, true},
 	}
 
+	pool.Start(3)
+	defer pool.Stop()
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			id, err := svc.CreateUser(t.Context(), tc.user)
@@ -52,6 +57,7 @@ func TestCreateUser(t *testing.T) {
 				t.Errorf("got id=%d", tc.wantID)
 			}
 		})
+
 	}
 }
 
@@ -63,7 +69,8 @@ func TestGetUser(t *testing.T) {
 		return domain.User{ID: id, Nick_name: "sanya", Email: "a@g.com", Password: "secret"}, nil
 	},
 	}
-	svc := service.NewUserService(fake)
+	pool := service.NewPool(10, func(ctx context.Context, job service.UserRegistered) error { return nil })
+	svc := service.NewUserService(fake, pool)
 
 	test := []struct {
 		name     string

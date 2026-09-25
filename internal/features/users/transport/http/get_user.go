@@ -1,7 +1,7 @@
 package users_transport_http
 
 import (
-	"database/sql"
+	"dayliki/internal/core/domain"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -24,7 +24,7 @@ func (h *UsersHTTPHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.usersService.GetUser(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, domain.ErrUserNotFound) {
 			http.Error(w, "user not found", http.StatusNotFound)
 			return
 		}

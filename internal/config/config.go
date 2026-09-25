@@ -9,6 +9,7 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	AppPort    string
 }
 
 func mustEnv(name string) (string, error) {
@@ -35,5 +36,10 @@ func New() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{DBUser: user, DBPassword: password, DBName: nameDB}, nil
+	appPort, err := mustEnv("APP_PORT")
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{DBUser: user, DBPassword: password, DBName: nameDB, AppPort: appPort}, nil
 }
