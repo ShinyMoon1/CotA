@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"dayliki/internal/config"
 	"dayliki/internal/core/storage/postgres"
+	auth "dayliki/internal/features/auth/http"
 	habit_service "dayliki/internal/features/habits/service"
-	habit_transport_http "dayliki/internal/features/habits/transport/http"
+	habits_transport_http "dayliki/internal/features/habits/transport/http"
 	metrics "dayliki/internal/features/metrics/http"
 	user_service "dayliki/internal/features/users/service"
 	users_transport_http "dayliki/internal/features/users/transport/http"
@@ -59,12 +60,12 @@ func main() {
 	}
 	pool := user_service.NewPool(10, stats)
 	pool.Start(5)
-	userService := user_service.NewUserService(userRepo, pool)
+	userService := user_service.NewUserService(userRepo, pool, cfg.JWTSecret)
 	usersHandler := users_transport_http.NewUsersHTTPHandler(userService)
 
 	habitRepo := postgres.NewHabitRepository(db)
 	habitService := habit_service.NewHabitService(habitRepo)
-	habitHandler := habit_transport_http.NewHabitsHTTPHandler(habitService)
+	habitHandler := habits_transport_http.NewHabitsHTTPHandler(habitService)
 
 	counter := &metrics.RequestCounter{}
 	mux.HandleFunc("GET /metrics", counter.Handler)
@@ -72,8 +73,11 @@ func main() {
 	mux.HandleFunc("POST /users", usersHandler.CreateUser)
 	mux.HandleFunc("GET /users/{id}", usersHandler.GetUser)
 
-	mux.HandleFunc("POST /habits", habitHandler.CreateHabit)
-	mux.HandleFunc("GET /habits/{id}", habitHandler.GetHabit)
+	mux.HandleFunc("POST /login", usersHandler.Login)
+
+	mux.Handle("POST /habits", auth.RequireAuth([]byte(cfg.JWTSecret), http.HandlerFunc(habitHandler.CreateHabit)))
+	mux.Handle("GET /habits/{id}", auth.RequireAuth([]byte(cfg.JWTSecret), http.HandlerFunc(habitHandler.GetHabit)))
+	mux.Handle("GET /habits", auth.RequireAuth([]byte(cfg.JWTSecret), http.HandlerFunc(habitHandler.ListHabits)))
 
 	srv := &http.Server{Addr: cfg.AppPort, Handler: counter.Middleware(mux)}
 

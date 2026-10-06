@@ -7,4 +7,6 @@ var (
 	ErrEmailTaken   = errors.New("email already taken")
 
 	ErrHabitNotFound = errors.New("habit not found")
+
+	ErrInvalidInput = errors.New("invalid input")
 )

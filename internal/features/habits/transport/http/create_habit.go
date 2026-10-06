@@ -1,4 +1,4 @@
-package habit_transport_http
+package habits_transport_http
 
 import (
 	"dayliki/internal/core/domain"

@@ -24,6 +24,10 @@ func (h *UsersHTTPHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.usersService.GetUser(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
 		if errors.Is(err, domain.ErrUserNotFound) {
 			http.Error(w, "user not found", http.StatusNotFound)
 			return

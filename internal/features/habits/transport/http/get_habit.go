@@ -1,4 +1,4 @@
-package habit_transport_http
+package habits_transport_http
 
 import (
 	"dayliki/internal/core/domain"
@@ -28,11 +28,15 @@ func (h *HabitsHTTPHandler) GetHabit(w http.ResponseWriter, r *http.Request) {
 	}
 	habit, err := h.habitService.GetHabit(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
 		if errors.Is(err, domain.ErrHabitNotFound) {
 			http.Error(w, "habit not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	resp := GetHabitResponse{ID: habit.ID, UserId: habit.UsersID, Title: habit.Title, Description: habit.Description, BaseExp: habit.BaseEXP, StatType: habit.StatType, StatGain: habit.StatGain, CreatedAt: habit.CreatedAt}

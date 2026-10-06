@@ -9,20 +9,30 @@ import (
 )
 
 type fakeHabitRepo struct {
-	createdFunc func(ctx context.Context, habit domain.Habit) (int, error)
-	getFunc     func(ctx context.Context, id int) (domain.Habit, error)
+	createdFunc   func(ctx context.Context, habit domain.Habit) (int, error)
+	createdFuncTx func(ctx context.Context, habit domain.Habit) (int, error)
+	getFunc       func(ctx context.Context, id int) (domain.Habit, error)
+	getListFunc   func(ctx context.Context, userID int, limit int, offset int) ([]domain.Habit, error)
 }
 
 func (f *fakeHabitRepo) CreateHabit(ctx context.Context, habit domain.Habit) (int, error) {
 	return f.createdFunc(ctx, habit)
 }
 
+func (f *fakeHabitRepo) CreateHabitTx(ctx context.Context, habit domain.Habit) (int, error) {
+	return f.createdFuncTx(ctx, habit)
+}
+
 func (f *fakeHabitRepo) GetHabit(ctx context.Context, id int) (domain.Habit, error) {
 	return f.getFunc(ctx, id)
 }
 
+func (f *fakeHabitRepo) ListHabits(ctx context.Context, userID int, limit int, offset int) ([]domain.Habit, error) {
+	return f.getListFunc(ctx, userID, limit, offset)
+}
+
 func TestCreateHabit(t *testing.T) {
-	fake := &fakeHabitRepo{createdFunc: func(ctx context.Context, habit domain.Habit) (int, error) { return 1, nil }}
+	fake := &fakeHabitRepo{createdFuncTx: func(ctx context.Context, habit domain.Habit) (int, error) { return 1, nil }}
 	svc := habit_service.NewHabitService(fake)
 	tests := []struct {
 		name    string

@@ -54,4 +54,6 @@ migrate-down:
 	@make migrate-action action=down
 
 cota-run:
-	@go run cmd/todoapp/main.go
+	@make env-up
+	make env-port-forward
+	go run cmd/todoapp/main.go

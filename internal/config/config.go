@@ -10,6 +10,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	AppPort    string
+	JWTSecret  string
 }
 
 func mustEnv(name string) (string, error) {
@@ -41,5 +42,10 @@ func New() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{DBUser: user, DBPassword: password, DBName: nameDB, AppPort: appPort}, nil
+	jwtSecret, err := mustEnv("JWT_SECRET")
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{DBUser: user, DBPassword: password, DBName: nameDB, AppPort: appPort, JWTSecret: jwtSecret}, nil
 }

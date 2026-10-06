@@ -8,7 +8,9 @@ import (
 
 type HabitRepository interface {
 	CreateHabit(ctx context.Context, habit domain.Habit) (int, error)
+	CreateHabitTx(ctx context.Context, habit domain.Habit) (int, error)
 	GetHabit(ctx context.Context, id int) (domain.Habit, error)
+	ListHabits(ctx context.Context, userID int, limit int, offset int) ([]domain.Habit, error)
 }
 
 type HabitService struct {
@@ -41,7 +43,7 @@ func (s *HabitService) CreateHabit(ctx context.Context, habit domain.Habit) (int
 		return 0, errors.New("StatType is unknown")
 	}
 
-	id, err := s.habitRepo.CreateHabit(ctx, habit)
+	id, err := s.habitRepo.CreateHabitTx(ctx, habit)
 	if err != nil {
 		return 0, err
 	}
@@ -51,11 +53,23 @@ func (s *HabitService) CreateHabit(ctx context.Context, habit domain.Habit) (int
 
 func (s *HabitService) GetHabit(ctx context.Context, id int) (domain.Habit, error) {
 	if id <= 0 {
-		return domain.Habit{}, errors.New("invalid user id")
+		return domain.Habit{}, domain.ErrInvalidInput
 	}
 	habit, err := s.habitRepo.GetHabit(ctx, id)
 	if err != nil {
 		return domain.Habit{}, err
 	}
 	return habit, nil
+}
+
+func (s *HabitService) ListHabits(ctx context.Context, userID int, limit int, offset int) ([]domain.Habit, error) {
+	if userID <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	listHabit, err := s.habitRepo.ListHabits(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return listHabit, nil
 }

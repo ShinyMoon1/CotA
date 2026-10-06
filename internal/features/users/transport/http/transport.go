@@ -12,6 +12,7 @@ type UsersHTTPHandler struct {
 type UsersService interface {
 	CreateUser(ctx context.Context, user domain.User) (int, error)
 	GetUser(ctx context.Context, id int) (domain.User, error)
+	Login(ctx context.Context, email string, password string) (string, error)
 }
 
 func NewUsersHTTPHandler(usersServiсe UsersService) *UsersHTTPHandler {

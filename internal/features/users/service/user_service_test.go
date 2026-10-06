@@ -10,8 +10,9 @@ import (
 )
 
 type fakeUserRepo struct {
-	createdFunc func(ctx context.Context, user domain.User) (int, error)
-	getFunc     func(ctx context.Context, id int) (domain.User, error)
+	createdFunc    func(ctx context.Context, user domain.User) (int, error)
+	getFunc        func(ctx context.Context, id int) (domain.User, error)
+	getByEmailFunc func(ctx context.Context, email string) (domain.User, error)
 }
 
 func (f *fakeUserRepo) CreateUser(ctx context.Context, user domain.User) (int, error) {
@@ -22,11 +23,15 @@ func (f *fakeUserRepo) GetUser(ctx context.Context, id int) (domain.User, error)
 	return f.getFunc(ctx, id)
 }
 
+func (f *fakeUserRepo) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	return f.getByEmailFunc(ctx, email)
+}
+
 func TestCreateUser(t *testing.T) {
 	fake := &fakeUserRepo{createdFunc: func(ctx context.Context, user domain.User) (int, error) { return 1, nil }}
 	pool := service.NewPool(10, func(ctx context.Context, job service.UserRegistered) error { return nil })
 
-	svc := service.NewUserService(fake, pool)
+	svc := service.NewUserService(fake, pool, "")
 
 	tests := []struct {
 		name    string
@@ -70,7 +75,7 @@ func TestGetUser(t *testing.T) {
 	},
 	}
 	pool := service.NewPool(10, func(ctx context.Context, job service.UserRegistered) error { return nil })
-	svc := service.NewUserService(fake, pool)
+	svc := service.NewUserService(fake, pool, "")
 
 	test := []struct {
 		name     string

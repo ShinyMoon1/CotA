@@ -1,4 +1,4 @@
-package habit_transport_http
+package habits_transport_http
 
 import (
 	"context"
@@ -12,6 +12,7 @@ type HabitsHTTPHandler struct {
 type HabitsService interface {
 	CreateHabit(ctx context.Context, habit domain.Habit) (int, error)
 	GetHabit(ctx context.Context, id int) (domain.Habit, error)
+	ListHabits(ctx context.Context, userID int, limit int, offset int) ([]domain.Habit, error)
 }
 
 func NewHabitsHTTPHandler(habitService HabitsService) *HabitsHTTPHandler {

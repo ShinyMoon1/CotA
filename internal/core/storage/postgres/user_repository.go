@@ -53,3 +53,16 @@ func (r *UserRepository) CreateCharacterStats(ctx context.Context, id int) error
 	}
 	return nil
 }
+
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	var user domain.User
+	query := "SELECT id, nick_name, email, password_hash, created_at FROM CotA.users WHERE email = $1"
+	row := r.db.QueryRowContext(ctx, query, email)
+	if err := row.Scan(&user.ID, &user.Nick_name, &user.Email, &user.Password_hash, &user.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.User{}, domain.ErrUserNotFound
+		}
+		return domain.User{}, fmt.Errorf("get user: %w", err)
+	}
+	return user, nil
+}

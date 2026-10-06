@@ -9,6 +9,7 @@ import (
 type RequestCounter struct {
 	count atomic.Int64
 }
+
 type MetricsResponse struct {
 	Requests int64 `json:"requests"`
 }
