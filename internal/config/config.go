@@ -6,11 +6,12 @@ import (
 )
 
 type Config struct {
-	DBUser     string
-	DBPassword string
-	DBName     string
-	AppPort    string
-	JWTSecret  string
+	DBUser           string
+	DBPassword       string
+	DBName           string
+	AppPort          string
+	JWTSecret        string
+	TelegramBotToken string
 }
 
 func mustEnv(name string) (string, error) {
@@ -47,5 +48,10 @@ func New() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{DBUser: user, DBPassword: password, DBName: nameDB, AppPort: appPort, JWTSecret: jwtSecret}, nil
+	telegramBotToken, err := mustEnv("TELEGRAM_BOT_TOKEN")
+	if err != nil{
+		return nil, err
+	}
+
+	return &Config{DBUser: user, DBPassword: password, DBName: nameDB, AppPort: appPort, JWTSecret: jwtSecret, TelegramBotToken: telegramBotToken}, nil
 }

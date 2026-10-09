@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type User struct {
 	ID            int
@@ -8,5 +11,6 @@ type User struct {
 	Email         string
 	Password      string
 	Password_hash string
+	TelegramID    sql.NullInt64
 	CreatedAt     time.Time
 }

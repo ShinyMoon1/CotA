@@ -36,7 +36,7 @@ func (h *HabitsHTTPHandler) GetHabit(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "habit not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	resp := GetHabitResponse{ID: habit.ID, UserId: habit.UsersID, Title: habit.Title, Description: habit.Description, BaseExp: habit.BaseEXP, StatType: habit.StatType, StatGain: habit.StatGain, CreatedAt: habit.CreatedAt}

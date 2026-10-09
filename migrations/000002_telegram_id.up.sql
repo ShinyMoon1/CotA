@@ -1,0 +1,1 @@
+ALTER TABLE CotA.users ADD COLUMN telegram_id BIGINT UNIQUE NULL;

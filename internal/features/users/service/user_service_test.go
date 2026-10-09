@@ -13,6 +13,7 @@ type fakeUserRepo struct {
 	createdFunc    func(ctx context.Context, user domain.User) (int, error)
 	getFunc        func(ctx context.Context, id int) (domain.User, error)
 	getByEmailFunc func(ctx context.Context, email string) (domain.User, error)
+	getByTgID      func(ctx context.Context, telegramID int64) (domain.User, error)
 }
 
 func (f *fakeUserRepo) CreateUser(ctx context.Context, user domain.User) (int, error) {
@@ -25,6 +26,10 @@ func (f *fakeUserRepo) GetUser(ctx context.Context, id int) (domain.User, error)
 
 func (f *fakeUserRepo) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	return f.getByEmailFunc(ctx, email)
+}
+
+func (f *fakeUserRepo) GetUserByTelegramID(ctx context.Context, telegramID int64) (domain.User, error) {
+	return f.getByTgID(ctx, telegramID)
 }
 
 func TestCreateUser(t *testing.T) {

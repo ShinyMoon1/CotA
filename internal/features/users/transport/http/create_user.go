@@ -14,8 +14,7 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	ID        int    `json:"id"`
-	Nick_name string `json:"full_name"`
+	ID int `json:"id"`
 }
 
 func (h *UsersHTTPHandler) CreateUser(w http.ResponseWriter, r *http.Request) {

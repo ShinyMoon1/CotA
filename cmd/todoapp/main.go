@@ -74,6 +74,7 @@ func main() {
 	mux.HandleFunc("GET /users/{id}", usersHandler.GetUser)
 
 	mux.HandleFunc("POST /login", usersHandler.Login)
+	mux.HandleFunc("POST /auth/telegram", usersHandler.AuthTelegram)
 
 	mux.Handle("POST /habits", auth.RequireAuth([]byte(cfg.JWTSecret), http.HandlerFunc(habitHandler.CreateHabit)))
 	mux.Handle("GET /habits/{id}", auth.RequireAuth([]byte(cfg.JWTSecret), http.HandlerFunc(habitHandler.GetHabit)))

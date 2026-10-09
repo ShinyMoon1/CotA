@@ -20,8 +20,8 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (int, error) {
 	var id int
-	query := "INSERT INTO CotA.users (nick_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id"
-	row := r.db.QueryRowContext(ctx, query, user.Nick_name, user.Email, user.Password_hash)
+	query := "INSERT INTO CotA.users (nick_name, email, password_hash, telegram_id) VALUES ($1, $2, $3, $4) RETURNING id"
+	row := r.db.QueryRowContext(ctx, query, user.Nick_name, user.Email, user.Password_hash, user.TelegramID)
 	if err := row.Scan(&id); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -59,6 +59,19 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (doma
 	query := "SELECT id, nick_name, email, password_hash, created_at FROM CotA.users WHERE email = $1"
 	row := r.db.QueryRowContext(ctx, query, email)
 	if err := row.Scan(&user.ID, &user.Nick_name, &user.Email, &user.Password_hash, &user.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.User{}, domain.ErrUserNotFound
+		}
+		return domain.User{}, fmt.Errorf("get user: %w", err)
+	}
+	return user, nil
+}
+
+func (r *UserRepository) GetUserByTelegramID(ctx context.Context, telegramID int64) (domain.User, error) {
+	var user domain.User
+	query := "SELECT id, nick_name, email, password_hash, telegram_id, created_at FROM CotA.users WHERE telegram_id = $1"
+	row := r.db.QueryRowContext(ctx, query, telegramID)
+	if err := row.Scan(&user.ID, &user.Nick_name, &user.Email, &user.Password_hash, &user.TelegramID, &user.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.User{}, domain.ErrUserNotFound
 		}

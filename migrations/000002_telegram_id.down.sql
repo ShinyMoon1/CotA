@@ -1,0 +1,1 @@
+ALTER TABLE CotA.users DROP COLUMN telegram_id;
