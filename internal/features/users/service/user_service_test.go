@@ -36,7 +36,7 @@ func TestCreateUser(t *testing.T) {
 	fake := &fakeUserRepo{createdFunc: func(ctx context.Context, user domain.User) (int, error) { return 1, nil }}
 	pool := service.NewPool(10, func(ctx context.Context, job service.UserRegistered) error { return nil })
 
-	svc := service.NewUserService(fake, pool, "")
+	svc := service.NewUserService(fake, pool, "", "")
 
 	tests := []struct {
 		name    string
@@ -80,7 +80,7 @@ func TestGetUser(t *testing.T) {
 	},
 	}
 	pool := service.NewPool(10, func(ctx context.Context, job service.UserRegistered) error { return nil })
-	svc := service.NewUserService(fake, pool, "")
+	svc := service.NewUserService(fake, pool, "", "")
 
 	test := []struct {
 		name     string

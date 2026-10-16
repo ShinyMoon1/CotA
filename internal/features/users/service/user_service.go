@@ -30,8 +30,8 @@ type UserService struct {
 	botToken  string
 }
 
-func NewUserService(userRepo UserRepository, pool *Pool, jwtSecret string) *UserService {
-	return &UserService{userRepo: userRepo, pool: pool, jwtSecret: jwtSecret}
+func NewUserService(userRepo UserRepository, pool *Pool, jwtSecret string, botToken string) *UserService {
+	return &UserService{userRepo: userRepo, pool: pool, jwtSecret: jwtSecret, botToken: botToken}
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user domain.User) (int, error) {

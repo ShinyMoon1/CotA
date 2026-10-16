@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": {
+      "*": "allow",
+      "cmd/**": "deny",
+      "internal/**": "deny",
+      "migrations/**": "deny",
+      "go.mod": "deny",
+      "go.sum": "deny",
+      "docker-compose.yaml": "deny",
+      ".env": "deny",
+      "frontend/**": "allow"
+    },
+    "read": "allow",
+    "bash": "ask"
+  }
+}

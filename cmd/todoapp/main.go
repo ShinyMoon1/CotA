@@ -60,7 +60,7 @@ func main() {
 	}
 	pool := user_service.NewPool(10, stats)
 	pool.Start(5)
-	userService := user_service.NewUserService(userRepo, pool, cfg.JWTSecret)
+	userService := user_service.NewUserService(userRepo, pool, cfg.JWTSecret, cfg.TelegramBotToken)
 	usersHandler := users_transport_http.NewUsersHTTPHandler(userService)
 
 	habitRepo := postgres.NewHabitRepository(db)

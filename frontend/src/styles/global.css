@@ -1,0 +1,1067 @@
+/* Dayliki — рунический шрифт заголовков (файлы в src/assets/fonts/). */
+@font-face {
+  font-family: 'Rusich';
+  src: local('Rusich'), url('../assets/fonts/Rusich.woff2') format('woff2');
+  font-display: swap;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Rusich';
+  src: url('../assets/fonts/Rusich-latin.woff2') format('woff2');
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------- палитра кузницы ---------- */
+:root {
+  --bg: #17191e;
+  --bg-deep: #0e1015;
+  --panel: #1e222c;
+  --panel-2: #242a37;
+  --line: #3a3f4d;
+  --line-soft: #2a2f3b;
+  --gold: #c9a227;
+  --gold-bright: #f0d060;
+  --gold-deep: #8a6d1c;
+  --bone: #e8e0d0;
+  --muted: #9a917f;
+  --blood: #d95f57;
+  --ember: #d9702b;
+  --radius: 14px;
+}
+
+/* ---------- база ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(120% 45% at 50% -8%, rgba(217, 112, 43, 0.14), transparent 60%),
+    radial-gradient(90% 35% at 50% 108%, rgba(201, 162, 39, 0.1), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  background-attachment: fixed;
+  color: var(--bone);
+  overflow-x: hidden;
+}
+
+/* тлеющая вуаль поверх фона */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(2px 2px at 12% 22%, rgba(240, 208, 96, 0.5), transparent 60%),
+    radial-gradient(1.5px 1.5px at 78% 12%, rgba(217, 112, 43, 0.55), transparent 60%),
+    radial-gradient(2px 2px at 64% 68%, rgba(240, 208, 96, 0.35), transparent 60%),
+    radial-gradient(1.5px 1.5px at 28% 78%, rgba(217, 112, 43, 0.4), transparent 60%),
+    radial-gradient(1px 1px at 88% 52%, rgba(240, 208, 96, 0.4), transparent 60%);
+  animation: emberDrift 18s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--gold);
+  color: #17191e;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: #4a4433;
+  border-radius: 8px;
+}
+
+/* ---------- заголовки ---------- */
+h1,
+h2,
+h3,
+.runic-heading {
+  font-family: 'Rusich', serif;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  background: linear-gradient(
+    180deg,
+    #f7e7ae 0%,
+    var(--gold-bright) 30%,
+    var(--gold) 55%,
+    var(--gold-deep) 80%,
+    var(--gold-bright) 100%
+  );
+  background-size: 100% 220%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 16px rgba(201, 162, 39, 0.28));
+  animation: headingShimmer 6s ease-in-out infinite;
+}
+
+h1 {
+  font-size: 30px;
+}
+h2 {
+  font-size: 22px;
+}
+
+.rune-strip {
+  color: #6f6335;
+  font-size: 12px;
+  letter-spacing: 0.55em;
+  margin: 4px 0 14px;
+  user-select: none;
+}
+
+/* ---------- каркас страниц ---------- */
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 18px 16px 24px;
+}
+
+.anim {
+  opacity: 0;
+  animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes headingShimmer {
+  0%,
+  100% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 60%;
+  }
+}
+
+@keyframes emberDrift {
+  from {
+    transform: translateY(0);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(-26px);
+    opacity: 1;
+  }
+}
+
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.25), 0 6px 20px rgba(0, 0, 0, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(201, 162, 39, 0.5), 0 6px 20px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@keyframes barStripes {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 28px 0;
+  }
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- таблички ---------- */
+.tablet {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel) 55%, #191d26);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(232, 224, 208, 0.07);
+}
+
+.tablet-gold {
+  border-color: var(--gold-deep);
+  /* rise первым: иначе pulseGlow перебивает появление (.anim) и блок остаётся невидимым */
+  animation:
+    rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    pulseGlow 3.2s ease-in-out infinite;
+  animation-delay: var(--d, 0ms), 0s;
+}
+
+/* ---------- кнопки ---------- */
+.btn-rune {
+  display: block;
+  width: 100%;
+  font-family: 'Rusich', serif;
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  color: #1a1405;
+  background: linear-gradient(180deg, #f0d060 0%, var(--gold) 55%, #9a7a1e 100%);
+  border: 1px solid #6f5716;
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(201, 162, 39, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease;
+}
+
+.btn-rune:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(201, 162, 39, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-rune:active {
+  transform: scale(0.97);
+}
+
+.btn-rune.small {
+  width: auto;
+  font-size: 14px;
+  padding: 8px 18px;
+}
+
+.btn-rune.ghost {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+.btn-rune.ghost:hover {
+  color: var(--bone);
+  border-color: var(--gold-deep);
+  filter: none;
+}
+
+.btn-rune:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-rune.danger {
+  background: transparent;
+  color: var(--blood);
+  border-color: #5c2320;
+  box-shadow: none;
+  flex: none;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.btn-rune.danger:hover {
+  border-color: var(--blood);
+  box-shadow: 0 0 12px rgba(217, 95, 87, 0.35);
+  filter: none;
+}
+
+.archived-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 2px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- полосы опыта ---------- */
+.xp-track {
+  height: 12px;
+  border-radius: 999px;
+  background: #0c0e13;
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.xp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      -55deg,
+      rgba(255, 255, 255, 0.16) 0 7px,
+      transparent 7px 14px
+    ),
+    linear-gradient(90deg, var(--gold-deep), var(--gold) 60%, var(--gold-bright));
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.55);
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: barStripes 1.2s linear infinite;
+}
+
+/* ---------- характеристики ---------- */
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+}
+
+.stat-sigil {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #2c313d, #10131a 75%);
+  box-shadow: inset 0 1px 0 rgba(232, 224, 208, 0.1), 0 3px 10px rgba(0, 0, 0, 0.5);
+  animation: floatY 5s ease-in-out infinite;
+}
+
+.stat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.stat-name {
+  color: var(--bone);
+}
+
+.stat-val {
+  font-family: 'Rusich', serif;
+  font-size: 16px;
+  color: var(--gold-bright);
+  text-shadow: 0 0 10px rgba(201, 162, 39, 0.4);
+}
+
+.stat-track {
+  height: 9px;
+  border-radius: 999px;
+  background: #0c0e13;
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 999px;
+  box-shadow: 0 0 8px currentColor;
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- герой / уровень ---------- */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.level-ring {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex: none;
+  filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.35));
+}
+
+.level-ring svg {
+  transform: rotate(-90deg);
+}
+
+.level-ring .lvl {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'Rusich', serif;
+  font-size: 24px;
+  color: var(--gold-bright);
+}
+
+.hero-sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.xp-nums {
+  color: var(--gold-bright);
+  font-size: 13px;
+  margin-top: 6px;
+  letter-spacing: 0.06em;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--gold-bright);
+  border: 1px solid var(--gold-deep);
+  background: rgba(201, 162, 39, 0.1);
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+/* ---------- квесты ---------- */
+.quest-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 9px 8px;
+  cursor: default;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.quests-note {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 2px 8px 8px;
+}
+
+.quest-hint {
+  color: var(--gold-bright);
+  font-size: 12px;
+}
+
+.quest-row .txt {
+  flex: 1;
+  transition: color 0.25s ease;
+}
+
+.quest-row.done .txt {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.rune-check {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  border-radius: 9px;
+  border: 1px solid var(--gold-deep);
+  background: #0c0e13;
+  color: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.rune-check.done {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold) 60%, var(--gold-deep));
+  color: #1a1405;
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.55);
+  animation: checkPop 0.3s ease;
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(0.7);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- привычки ---------- */
+.habit-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.habit-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-title {
+  font-size: 16px;
+  color: var(--bone);
+}
+
+.habit-desc {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.habit-tags {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-tag {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 2px 9px;
+  opacity: 0.9;
+}
+
+.empty {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--muted);
+}
+
+.empty .big-rune {
+  font-size: 52px;
+  color: #4a4433;
+  animation: floatY 5s ease-in-out infinite;
+}
+
+/* ---------- реликвии ---------- */
+.class-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+  position: relative;
+}
+
+.class-banner::after {
+  content: 'ᚠᚢᚦᚨᚱᚲᚷᚹ';
+  position: absolute;
+  right: 6px;
+  bottom: -14px;
+  font-size: 34px;
+  color: rgba(201, 162, 39, 0.12);
+  letter-spacing: 0.2em;
+  pointer-events: none;
+}
+
+.class-rune {
+  font-size: 44px;
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(201, 162, 39, 0.6);
+  animation: floatY 5s ease-in-out infinite;
+}
+
+.class-name {
+  font-family: 'Rusich', serif;
+  font-size: 22px;
+  color: var(--gold-bright);
+}
+
+.class-hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.relic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.relic {
+  text-align: center;
+  padding: 14px 10px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.relic:hover {
+  transform: translateY(-3px);
+}
+
+.relic .glyph {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.relic.open {
+  border-color: var(--gold-deep);
+  /* rise первым: иначе pulseGlow перебивает появление (.anim) и карточка остаётся невидимой */
+  animation:
+    rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    pulseGlow 3.2s ease-in-out infinite;
+  animation-delay: var(--d, 0ms), 0s;
+}
+
+.relic.open .glyph {
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px rgba(201, 162, 39, 0.65);
+  animation: floatY 4.5s ease-in-out infinite;
+}
+
+.relic.locked {
+  opacity: 0.42;
+  filter: grayscale(0.8);
+}
+
+.relic.locked .glyph {
+  color: var(--muted);
+}
+
+.relic b {
+  display: block;
+  font-size: 13px;
+  margin-top: 8px;
+  color: var(--bone);
+}
+
+.relic small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.relic .kind {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 11px;
+  color: var(--gold-bright);
+}
+
+/* ---------- аналитика ---------- */
+.chart-card {
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.chart-title {
+  font-family: 'Rusich', serif;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
+  margin-bottom: 6px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.sum-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* ---------- табы ---------- */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(14, 16, 21, 0.92);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line-soft);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10;
+}
+
+.tabbar-inner {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  width: 100%;
+}
+
+.tab {
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: 'Rusich', serif;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  padding: 9px 4px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  box-shadow: inset 0 2px 0 transparent;
+  transition: color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tab .glyph {
+  font-size: 19px;
+  line-height: 1;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.tab.active {
+  color: var(--gold-bright);
+  box-shadow: inset 0 2px 0 var(--gold);
+}
+
+.tab.active .glyph {
+  filter: drop-shadow(0 0 8px rgba(240, 208, 96, 0.8));
+  transform: translateY(-1px);
+  animation: floatY 3.5s ease-in-out infinite;
+}
+
+/* ---------- логин ---------- */
+.login-wrap {
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.login-sigil {
+  text-align: center;
+  font-size: 72px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(201, 162, 39, 0.55);
+  animation: floatY 5s ease-in-out infinite, spinSlow 60s linear infinite;
+}
+
+.login-title {
+  text-align: center;
+  font-size: 34px;
+  margin: 6px 0 2px;
+}
+
+.login-sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  margin-bottom: 20px;
+}
+
+.auth-error {
+  color: var(--blood);
+  font-size: 13px;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.auth-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.loading-veil {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.loading-veil .big-rune {
+  font-size: 52px;
+  color: var(--gold-deep);
+  animation: floatY 2.5s ease-in-out infinite, pulseGlow 2.5s ease-in-out infinite;
+  border-radius: 50%;
+}
+
+/* ---------- модалка ---------- */
+.sheet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 2px 10px;
+}
+
+/* ---------- профиль ---------- */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar-rune {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-family: 'Rusich', serif;
+  font-size: 30px;
+  color: var(--gold-bright);
+  border-radius: 50%;
+  border: 1px solid var(--gold-deep);
+  background: radial-gradient(circle at 50% 35%, #2c313d, #10131a 75%);
+  text-shadow: 0 0 14px rgba(201, 162, 39, 0.6);
+  animation: floatY 5s ease-in-out infinite;
+}
+
+.profile-name {
+  font-family: 'Rusich', serif;
+  font-size: 22px;
+  color: var(--bone);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-email {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- лимиты ---------- */
+.caps-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cap-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cap-row .stat-sigil {
+  width: 38px;
+  height: 38px;
+  font-size: 19px;
+}
+
+.num-input {
+  width: 100%;
+  margin-top: 6px;
+  background: #0c0e13;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  color: var(--gold-bright);
+  font-family: 'Rusich', serif;
+  font-size: 18px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.num-input:focus {
+  border-color: var(--gold-deep);
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
+}
+
+/* ---------- настройки ---------- */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px 2px;
+  cursor: pointer;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.settings-row.danger b {
+  color: var(--blood);
+}
+
+.row-glyph {
+  font-size: 18px;
+  color: var(--gold);
+  flex: none;
+}
+
+.switch {
+  width: 46px;
+  height: 26px;
+  flex: none;
+  border-radius: 999px;
+  background: #0c0e13;
+  border: 1px solid var(--line);
+  position: relative;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.switch .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: left 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.switch.on {
+  background: rgba(201, 162, 39, 0.25);
+  border-color: var(--gold-deep);
+}
+
+.switch.on .knob {
+  left: 22px;
+  background: var(--gold-bright);
+  box-shadow: 0 0 10px rgba(240, 208, 96, 0.7);
+}
+
+/* ---------- бейджи реликвий ---------- */
+.open-badge,
+.locked-badge {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.open-badge {
+  color: #1a1405;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+}
+
+.locked-badge {
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+/* открытые остаются видимыми, закрытые — приглушены, но читаемы */
+.relic.locked {
+  opacity: 0.62;
+  filter: grayscale(0.45);
+}
+
+/* ---------- отключение анимаций ---------- */
+.no-anim .anim {
+  opacity: 1;
+}
+
+.no-anim *,
+.no-anim *::before,
+.no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ---------- движение ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .anim {
+    opacity: 1;
+  }
+
+  body::before {
+    display: none;
+  }
+}
