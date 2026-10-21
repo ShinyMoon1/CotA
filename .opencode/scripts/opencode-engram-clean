@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""
+Git clean filter for AGENTS.md — strips the Engram block before staging.
+
+Reads stdin as BYTES, removes the block, writes stdout as bytes. No-op when no
+complete block is present.
+
+Bytes, not text, because these filters sit in git's object path. v1.2.0 used
+sys.stdin.read(), which is strict UTF-8 under any *.UTF-8 locale (the macOS
+Terminal and Linux desktop default). One latin-1 byte in AGENTS.md raised
+UnicodeDecodeError, git reported "external filter failed", and committed the
+file WITH the Engram block in it. Line endings are never rewritten either: the
+markers tolerate an optional CR rather than normalising the document.
+
+Self-healing, and the one-time diff it produces: git-stored AGENTS.md should
+never contain a block, but it can — the filter command falls back to `cat` when
+these scripts are missing, so a commit made before extraction stores the block
+verbatim. The first commit made once the scripts exist strips it, showing up as
+a one-time diff deleting the block. That is the repo being corrected.
+"""
+import re
+import sys
+
+# --- BEGIN SHARED BLOCK LOCATOR ---
+# Kept BYTE-IDENTICAL between opencode-engram-clean and opencode-engram-smudge.
+# __tests__/git-filter.test.ts asserts that; do not edit one copy alone.
+#
+# Duplicated rather than imported on purpose. These scripts run inside git's
+# object path, and v1.2.0 proved what a crashing filter costs: git reports
+# "external filter failed", falls back to UNFILTERED content, and commits the
+# Engram block into the repository. An import is one more file that can be
+# missing, so the shared code is copied and a test forbids drift instead.
+#
+# Markers must be alone on their line; an inline mention is prose. `\r?$` so
+# CRLF files match without the document being normalised. The version is
+# OPTIONAL: a user who tidies the marker down to `<!-- engram -->` used to
+# make the filter blind to it, so the block was committed verbatim AND a
+# second copy prepended on checkout.
+OPEN_RE = re.compile(r"^<!-- engram(?: v.+?)? -->\r?$", re.MULTILINE)
+CLOSE_RE = re.compile(r"^<!-- /engram -->\r?$", re.MULTILINE)
+
+
+def decode(raw):
+    """Bytes -> str, lossless for arbitrary (even invalid) byte sequences."""
+    return raw.decode("utf-8", errors="surrogateescape")
+
+
+def encode(text):
+    """Inverse of decode(). encode(decode(b)) == b for every b."""
+    return text.encode("utf-8", errors="surrogateescape")
+
+
+def find_block(text):
+    """
+    Span of the complete Engram block, or None.
+
+    - The opening marker is the LAST one before the close, so a user who
+      documents Engram's own marker syntax above the block keeps their prose.
+    - The closing marker is the first one that HAS an opening marker before it.
+      Taking the first close outright made a stray close above the block turn
+      the filter into a no-op, committing the whole block verbatim.
+    """
+    opens = [m.start() for m in OPEN_RE.finditer(text)]
+    if not opens:
+        return None
+
+    for close in CLOSE_RE.finditer(text):
+        before = [o for o in opens if o < close.start()]
+        if not before:
+            continue
+        end = close.end()
+        if text[end:end + 2] == "\r\n":
+            end += 2
+        elif text[end:end + 1] == "\n":
+            end += 1
+        return before[-1], end
+
+    return None
+# --- END SHARED BLOCK LOCATOR ---
+
+
+def main():
+    text = decode(sys.stdin.buffer.read())
+
+    # Strip EVERY block, not just the first. Stacked markers — which the
+    # version-less-marker bug used to create by prepending a second block —
+    # leave another complete block behind after one removal, and git runs the
+    # clean filter exactly once per staging, so a single pass committed a block
+    # into the repo. Each iteration removes at least two marker lines, so this
+    # terminates.
+    while True:
+        span = find_block(text)
+        if span is None:
+            break
+        start, end = span
+        text = text[:start] + text[end:]
+
+    sys.stdout.buffer.write(encode(text))
+
+
+if __name__ == "__main__":
+    main()

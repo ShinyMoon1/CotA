@@ -1,0 +1,21 @@
+{
+  "preset": "contrast-first",
+  "question": "Does opening a concept node with contrasting cases + committed invention beat resolve-first teaching, for this learner, when the P18 gates pass?",
+  "arms": ["contrast_first", "resolve_first"],
+  "metric": "transfer_fired",
+  "stratify_by": ["threshold", "viz.affordance"],
+  "min_per_arm": 8,
+  "analysis": "randomization-test",
+  "why": "PS-I beats instruction-first on conceptual knowledge and transfer at g = 0.36 [0.20, 0.51] (Sinha & Kapur 2021, 166 comparisons), with the effect trending upward with age; the fidelity criteria this arm implements (multiple committed attempts, consolidation built on the learner's own attempts, dialogic) carry the corpus's larger effects (0.56 vs 0.20; 0.47; 0.55 vs 0.24).",
+  "why_not_a_default": "Three honest holes (docs/16 §3, §7). DURATION: fidelity's slope REVERSES for interventions spanning a few hours (β = -0.0116) — and an Engram session is short, so even the lean form is unproven at this session length. SOLO: the corpus is classroom/group work; the individual-work moderator favors solo only in short interventions, and the group-work main effect runs the other way. POPULATION: the undergraduate cell is the corpus's weakest adult estimate. The direction is meta-analytic; the transfer to a solo chat session is exactly what this preset measures.",
+  "threat_to_validity": "MEASUREMENT BLINDNESS, and it is the sharpest one in the file (docs/16 G2): the PS-I benefit has repeatedly failed to appear on sequestered, resource-free measures (Schwartz & Bransford 1998; Schwartz & Martin 2004 — their no-resource cells showed NO invention advantage), and Engram's ordinary receipts are that family of measure. metric=transfer_fired (did the capability fire at maturity) is the transfer-sensitive outcome; a null on first_review_recall or retention_7d would be expected EVEN IF THE MOVE WORKS and settles nothing. Secondary threat: time-on-task — the contrast-first opening costs minutes the resolve-first arm spends on the same node differently; log honest session minutes.",
+  "protocol": [
+    "Both arms: only nodes that pass the grammar's four-way P18 gate enter the experiment population — (1) conceptual objective (a `concept` node, not arbitrary:true), (2) prior knowledge above the novice floor, (3) no interactivity:high, (4) an authored contrast set. A gated-out node is taught instruction-first and contributes nothing — a safety rule is never an arm.",
+    "Expect a slow settle, by design: transfer_fired only reads at maturity (stability >21d across 3+ retrievals), so 8 observations per arm means ~16 gated concept nodes carried to maturity while this occupies the single active-experiment slot. Weeks, not sessions. Say so at start.",
+    "contrast_first: the grammar's contrast-first opening — serve the authored cases, elicit >=2 ranked candidate rules (H1-H2 hints only, no correctness signal), then RESOLVE built from the attempts, quoting them.",
+    "resolve_first: ordinary beat 2 (single PREDICT/ATTEMPT) then RESOLVE as today; the authored case set may be used as RESOLVE material, never as a pre-commitment invention task.",
+    "Both arms: VERIFY, stash, and blind assessor grading are byte-identical; the metric's receipts come from the same oracle.",
+    "Never run contrast_first in Sprint mode in either arm's sessions (the duration finding is a gate on the move, not an arm difference).",
+    "An arm never moves under a node; assignment is engine-seeded and stratified as always."
+  ]
+}

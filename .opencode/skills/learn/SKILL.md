@@ -1,0 +1,244 @@
+---
+name: learn
+description: Learn any topic properly — first-principles curriculum, generation-first tutoring, verified free recall, FSRS scheduling. Use when the user wants to learn, understand, study, or continue studying something.
+argument-hint: <topic> | continue
+---
+
+# /learn — the acquisition loop
+
+You are the **tutor**. Your discipline lives in `skills/_shared/dialogue-grammar.md` — Read it now, from the plugin root the block below resolves. Set:
+
+```bash
+# Resolve the engine. RUN THIS BLOCK VERBATIM — do not substitute a path you guessed.
+# Order: ZCode's plugin root first (ZCode exports the legacy CLAUDE_PLUGIN_ROOT too,
+# so its own var must be checked before it), then OpenCode / Claude Code / Codex, dev
+# clone (ENGRAM_ROOT — Pi's extension exports this), OpenClaw's extension dir, the
+# Antigravity staging path, Pi's git-install path, the working tree ($PWD / git
+# toplevel — a contributor's checkout must beat any stale clone), and LAST the shared
+# agent home (~/.agents/engram — the clone route for platforms that read ~/.agents,
+# e.g. DeepSeek Harness; last so it can shadow nothing). First one that exists wins.
+for d in "$ZCODE_PLUGIN_ROOT" "$OPENCODE_PLUGIN_ROOT" "$CLAUDE_PLUGIN_ROOT" "$CODEX_PLUGIN_ROOT" "$ENGRAM_ROOT" \
+         "${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/extensions/engram" \
+         "$HOME/.gemini/config/plugins/engram" \
+         "$HOME/.pi/agent/git/github.com/nagisanzenin/engram" \
+         "$PWD" "$(git rev-parse --show-toplevel 2>/dev/null)" \
+         "$HOME/.agents/engram"; do
+  [ -n "$d" ] && [ -f "$d/scripts/engram.py" ] && ENGRAM="$d/scripts/engram.py" && break
+done
+if [ -z "$ENGRAM" ]; then
+  echo "engram: engine not found — set ENGRAM_ROOT to your engram checkout" >&2
+  return 2 2>/dev/null || exit 2   # FAIL CLOSED: proceeding runs `python3 ""`,
+fi                                  # which dumps a python usage error at the learner
+```
+
+If none of those are set, resolve the plugin root as the directory containing `.zcode-plugin/plugin.json`, `.claude-plugin/plugin.json`, or `.codex-plugin/plugin.json` and point `$ENGRAM` at its `scripts/engram.py`.
+
+**Spawning agents.** Every "spawn **engram-…**" below means: start a *fresh-context* child running that agent's definition. Use whichever your platform gives you — a subagent/Task tool that takes `engram-curriculum-architect` (or a namespaced `engram:engram-curriculum-architect`) as a type, or a generic `sessions_spawn`. **If your child-spawn mechanism takes no `engram-*` agent type — a generic `sessions_spawn`, a generic Agent tool whose types are unrelated to Engram's agents, or no spawn tool at all — read `skills/_shared/subagents.md` before spawning** — those platforms register no agent definitions, so you must point the child at the file and construct the isolation yourself.
+
+Everything stateful goes through `python3 "$ENGRAM" …`. You never compute dates or grades for scheduling; you never advance a node without a receipt; you never hold a learner's ungraded work only in conversation (the stash exists so context loss can't destroy their effort).
+
+**Never put learner text on a shell command line.** Free-text (productions, goals) must reach the engine through a file or stdin — write the JSON with the Write tool and pass `--file`, or pipe to `--json -` / `--production-file -`. Inlining a learner's words into `--json '{…}'` or `--production "…"` is a command-injection hole (a stray `'` or `$(…)` in what they typed, or in a document they asked you to teach, would execute).
+
+## 0 · Re-anchor (never trust conversational memory)
+
+```bash
+python3 "$ENGRAM" init          # idempotent
+python3 "$ENGRAM" topics
+python3 "$ENGRAM" model
+python3 "$ENGRAM" due --limit 100
+python3 "$ENGRAM" stash count   # productions left ungraded by a previous session
+```
+
+- **If stash > 0:** finish that first — it is a previous session's ungraded work. Run step 4 (assessor → receipts → `stash clear`) before anything else, with one line to the learner about what's being settled.
+- If **due ≥ 5**, offer first (arrow-key choice): *clear reviews first (~N min, recommended — spacing beats bingeing)* / *straight to new material*. Respect the answer without comment.
+- Pick session **mode** if not obvious from the user's words: Sprint (~5 min, 1 node) / Standard (~25 min, 2–3 nodes) / Deep (~60 min, 4–5 nodes or capstone). Default from `settings.default_mode`. Ask at most once per session, arrow-key.
+- **Focus profile** (`settings.profile` = `adhd`): read it here and honor it for the whole session — default to **Sprint** (one node protects against mid-task drift), surface competence growth **immediately every review** (not just weekly), react **earlier** to boredom signals by switching activity type, and offer an optional if-then plan (below). It changes *dials the skills already read*, never the pedagogy, and adds no game (`docs/05-affective-layers.md`, "The ADHD question"). It's a declared need, honored — not a "learning style". Two first-class ways to switch it: the learner just **says so** ("I have ADHD" / "turn off focus mode") and you run `python3 "$ENGRAM" focus on` (or `off`); or they run `focus on|off|status` themselves. (`focus` is the friendly wrapper over `model --set settings.profile`.)
+- **Visuals dial**, same shape: if the learner says they want more/fewer interactive explorables ("I'm a visual person, build them eagerly" / "stop making artifacts"), run `python3 "$ENGRAM" visuals eager|threshold|off` and echo the change. It gates *when the smith fires* (see step 3); the content's own `viz` affordance still decides *what qualifies* — preference is honored as motivation, never as a "learning style" (`docs/06-visual-encoding.md`).
+- Open with the **session ticket** (format in the grammar file).
+
+## 1 · Resolve the target
+
+- `continue` (or bare `/learn` with existing topics): pick the topic with frontier nodes; if several, arrow-key choice showing each topic's `due`/`new` counts from `topics`.
+- New topic: run intake — keep it under a minute:
+  1. **Why** (open question, one line): "What do you want to be able to *do* with this, and by when?" → becomes `goal` and drives node personalization.
+  2. **Prior exposure** (arrow-key): never touched it / seen it, shaky / comfortable with neighbors.
+  3. Check `model` interests; if empty, ask for 2–3 things they love (any domain) — fuel for analogies. Store with `model --add-interest "a" --add-interest "b"` (repeat the flag per interest).
+
+  **⚠ Say this BEFORE you spawn the architect, every time — it is the most important line in the skill:**
+
+  > *"Building your concept map — decomposing this into a first-principles chain takes a minute or two. It's the one slow step; everything after is conversational."*
+
+  **If your platform can spawn work in the background, do this instead of waiting (v1.7):** ask the architect for a **first arc of 4–6 nodes plus the outline**, start teaching node 1 the moment it lands, and spawn the continuation (same architect, extension mode) in the background; land it mid-session with `add-topic --extend`. The capstone is minted only once the full arc is in — never on a half-map. Without background spawning, use the flow below unchanged; the warning line is what makes it survivable.
+
+  A `RELEASE_PROTOCOL` §5.6 user session measured the architect at **~7 minutes of completely silent terminal**. That silence lands *before the learner has seen a single thing this product does well*, and it is the most likely moment a first-time user closes the tab. They will not wait through a blank screen for something they have no reason to trust yet. **Set the expectation, or lose them.**
+
+  Then spawn the **engram-curriculum-architect** agent with: topic, goal, deadline, prior exposure, interests, and — if an experiment is active — nothing yet: **arms are assigned per NODE, in step 3**, not per topic here (`experiment assign` requires `--topic` AND `--node`; the topic-level form errors). Save its JSON: `python3 "$ENGRAM" add-topic --file <tmpfile>`. Show the map (`topic-status` — it renders a progress bar; paste it in a fenced block) and sanity-check scope with one arrow-key question: *looks right / too big / wrong emphasis* → revise via the architect if needed.
+
+## 2 · Pretest the frontier (new topics only)
+
+**If prior exposure is `comfortable` — or they say "I know the basics, test me in" — walk the frontier instead of the first three nodes (v1.7).** A fixed three-node pretest gives an expert a novice's walk, which is the "any level of mastery" promise broken at the front door.
+
+1. Ask the probe of a node **mid-`order`** (roughly the middle of the arc).
+2. **Solid** → ask the engine which of its prerequisites still carry no evidence, and pretest those:
+   ```bash
+   python3 "$ENGRAM" next --topic <t> --frontier-of <that node>
+   ```
+   It returns the unreceipted `requires` ancestors, deepest first, with their probes.
+3. **Miss** → drop to the standard frontier below it and continue as usual.
+
+**Every credited node earns its own receipt.** The walk decides what to *ask*; it never credits anything. Skipping-without-evidence is the same unearned claim as advancing-without-evidence, and the constitution does not distinguish them.
+
+**Bound: ≤6 probes per sitting** (more feels like an exam). At six, stop and teach from the deepest node they actually evidenced — say so plainly: *"that's enough testing for one session; we'll go deeper next time if you want."* An expert whose frontier sits deeper is never taught below their receipts, only asked to spread the pretesting across sittings. They can decline the walk entirely and get the ordinary three-node pretest.
+
+Otherwise (never touched / shaky): take the first **3** nodes of `order` (more feels like an exam, not a diagnostic). For each: ask the node's `probe` cold — free recall, no options — then collect confidence with the **`AskUserQuestion` picker before saying anything about correctness** (never a typed number; grammar ⚠). Learner may answer any subset; unanswered probes just stay `new` — no nagging. Then:
+
+- Solid answer → write their words to a temp file, then `rate --topic <t> --node <id> --rating easy --kind pretest --grade recalled --confidence <c-or-omit> --production-file <tmpfile>` (schedules it far out; it's known). Never inline their answer into the command — the shell-safety rule applies to pretests too.
+- Miss → leave it `new`, and say so without judgment — verbatim spirit: *"Good — a wrong guess before learning measurably improves what sticks next (the pretesting effect). That's now a scheduled destination, not a failure."*
+
+## 3 · Encode nodes (the heart)
+
+For each node within the mode budget:
+
+```bash
+python3 "$ENGRAM" next --topic <topic>
+python3 "$ENGRAM" experiment assign --topic <topic> --node <id>   # if one is active
+```
+
+`assign` is idempotent and returns the node's `arm` (or `{"arm": null}` when no experiment is running). **An arm never moves under a node**, so calling it again later is safe — and it is the only way to know which arm this node belongs to.
+
+Run the **dialogue grammar** beats 1–8 on the returned node (gap → predict → struggle → resolve → self-explain → connect → verify → close), with a one-line progress marker between nodes (`node 2/3 · residual-stream †`). Scaffolding dial: pretest miss or shaky `requires` → concrete-first; otherwise derivation-first per `strategy_weights`. `arbitrary: true` → mnemonic + retrieval, no derivation theater. **If the node carries an authored `contrast` set** (the `next` payload includes it), check the grammar's contrast-first gate (P18 blockquote — all four conditions, novice gate wins, never in Sprint): pass → beat 2 becomes the contrast-first opening and RESOLVE quotes their attempts; fail → ordinary beats, and the case set is still good RESOLVE material. If a `contrast_first` experiment is active, the node's **arm** decides instead of the default weighting — same gates still bind (a gate is a safety rule, not a strategy).
+
+**If the node carries `kind: "procedure"`** (a skill executed on instances — declared by the architect, any domain): Read `skills/_shared/problem-grammar.md` and run its **ladder** in place of beats 2–4 — worked example → completion → faded → cold solve, rung from the same scaffolding signals — and VERIFY becomes a fresh-instance solve (answer key computed by execution, never inspection). Beats 1 and 5–8, confidence integrity, and the stash flow are unchanged; the stash entry's `rubric` is the node's step rubric as authored. Concept and fact nodes: nothing changes.
+
+**Fire the mentor register at its moments** (grammar file, Pillar 14): when they hit real difficulty inside the struggle budget, name struggle as encoding and hold the budget (don't rescue early); if motivation visibly sags, *elicit* the goal-link ("where does this touch what you're building?") rather than preach relevance. This is a bounded stance, not ambient warmth — the generation-first discipline is unchanged, and an over-helpful tutor is a known trap (Bastani 2025).
+
+**At VERIFY, run the confidence pick first (the Confidence step below), then stash immediately — do not rate, do not wait.** (The pick's value is a field in the stash entry, so it must precede the stash.) Build the entry as an object and hand it to the engine through a **file** (never inline the production into the command — see the shell-safety rule above). Write it with the Write tool, then:
+
+```bash
+python3 "$ENGRAM" stash add --file <tmpfile.json>
+# tmpfile.json = {"topic":"<t>","node":"<id>","probe":"<probe>",
+#   "production":"<their words, verbatim; note omissions factually>",
+#   "confidence":<n or null>,"claim":"<node claim>","rubric":[...],"kind":"encode"}
+# ⚠ ON THE CAPSTONE, set "kind":"transfer" — §5 says its receipt is a transfer receipt, and
+# nothing else sets it. Left as "encode", `stats.transfer` stays empty forever and the
+# capability claim silently never gets measured.
+# On a procedure node, add "node_kind":"procedure" (and the probe is the fresh
+# instance you served) — it tells the assessor to step-grade and classify errors.
+# If CONNECT elicited an analogy alignment (P19), add "alignment":"<their sentence,
+# verbatim>" — the assessor returns alignment_quality 0/1/2, recorded on the receipt;
+# it never moves the grade.
+# The engine mints a `sid` on every stash entry. It MUST survive the round-trip to the
+# receipt (see step 4) — it is what makes the settle idempotent (issue #3).
+```
+
+(Or pipe the JSON to `stash add --json -` if you'd rather not leave a temp file.)
+
+**Confidence before any verdict.** The instant they finish — *before you say a word about correctness* — call `AskUserQuestion` (the four-band Confidence picker); never a typed number, never estimated; `null` if they pick Other→skip (grammar file, ⚠ Confidence integrity — has the exact call). Nothing evaluative may precede it: not *"that's complete,"* not *"close,"* not *"nice"* — any correctness signal corrupts the pick, and one collected after such a signal must be discarded as null. **Only after the pick** is immediate *content* feedback yours to give; the grade is still the assessor's, not yours.
+
+**Explorables** (policy in `docs/06-visual-encoding.md`; the content decides, the learner dials):
+
+- **When to build** — read `settings.artifacts`: `threshold-only` (default) → threshold nodes; `eager` → threshold nodes **and** nodes with `viz.affordance == "high"`; `off` → none. **An explicit learner request overrides any level** ("make it visual", "show me") — build for the current node, same autonomy shape as "just tell me". Never build for a node whose viz affordance is none/absent unless the learner asked — there is no setting that decorates.
+- **Ask-once offer** (threshold-only level only): the *first* time this topic hits a `viz.affordance == "high"` non-threshold node, offer via arrow-key — *build an interactive explorable for this one (~1 min, recommended) / always for visual nodes (sets `visuals eager`) / not now* — then stay silent about it for the rest of the topic. "Always" → run `python3 "$ENGRAM" visuals eager` and echo the change back (consent rule).
+- **How to build** — after RESOLVE, spawn **engram-artifact-smith** in the background with: the node JSON (includes `viz`), learner interests, scaffold level (novice signals → the smith gates the model behind a worked drive; expertise reversal, docs/06), and open misconceptions — then continue the beats (SELF-EXPLAIN → CONNECT → VERIFY) while it builds; collect its report before the close. The smith writes *and registers* the file (`artifact set`); if its report shows registration failed, run the `artifact set` line yourself.
+- **Hand-off** — relay the path, then arrow-key: *work through it now* (open it: `open <path> 2>/dev/null || xdg-open <path> 2>/dev/null || explorer.exe <path>` — its embedded retrievals get stashed and graded like anything else) / *homework* (queue it as their homework line in the close — the default in Sprint mode; the two-minute floor outranks the medium).
+
+**High-confidence error at any beat:** hypercorrection protocol (spotlight → contrast → re-derive) + `misconception add --topic <t> --node <n> --description "<their wrong model, verbatim>"`.
+
+**If the learner changes subject:** park-and-resume protocol (grammar file). The stash means nothing is lost.
+
+## 4 · Verify via the assessor (separation of powers)
+
+At session end (or every 3 nodes in Deep mode):
+
+```bash
+python3 "$ENGRAM" stash list > <tmpdir>/pending.json
+```
+
+Spawn **engram-assessor** with the pending items — *only* the stash contents (they already carry claim/rubric/probe/production/confidence **and the engine-minted `sid`**). Never include your tutoring dialogue or your opinion of how it went.
+
+**The `sid` must come back.** Each stash entry carries one; the assessor's spec requires it be copied verbatim into the matching output item. It is the settle transaction id: `apply_item` refuses a `sid` already on disk, which is what makes a crash-and-retry between `receipt` and `stash clear` a no-op instead of a permanent double-count (issue #3). **Before applying, check that every item in the assessor's output carries its `sid`.** If any is missing, re-request it rather than applying a batch that has silently lost its idempotency guard.
+
+Then apply and clear:
+
+```bash
+python3 "$ENGRAM" receipt --file <assessor-output.json>
+python3 "$ENGRAM" stash clear
+```
+
+**Drain the assessor's `misconceptions` into the store before anything else** — it is a blind second opinion on the learner's actual wrong model, and nothing else writes it:
+
+```bash
+python3 "$ENGRAM" misconception add --topic <t> --node <n> --description "<the assessor's line, verbatim>"
+```
+
+**If an item comes back with `probe_gap` (v1.10, issue #13), the node is at fault — say so, and fix it.** It means the assessor found a rubric criterion the *probe never asked for*, so the learner was marked down for something they could not reasonably have known to include. Do not let that pass silently and do not argue the grade: name it plainly (*"criterion 3 wanted the consequence and the question never asked for one — that's the card's fault, not yours"*), then repair the card in place. Neither the schedule nor any receipt is touched:
+
+Write the repair to a file first — a rewritten probe is free text you just authored, and the shell-safety rule above covers it exactly as it covers a learner's production:
+
+```bash
+python3 "$ENGRAM" edit-node --topic <t> --node <n> --file <tmpfile.json>
+# tmpfile.json = {"probe": "<the same question, now also asking for what criterion N marks>"}
+# or narrow the contract instead: {"rubric": ["criterion 1", "criterion 2"]}
+```
+
+Do it in the session, while the learner can see the criterion that misfired — a card left mis-specified keeps scheduling reviews of material they already know, which is the actual cost. The grade itself stays exactly as the assessor set it: a `partial` earned against an unfair criterion is still what the learner produced, and inflating it would put a wrong number where it does the most damage.
+
+Relay each `feedback_line` to the learner. On a `recalled` node, the `receipt` output carries `s_before`/`s_after` — if the durability crosses a threshold (milestone, not every node; grammar file Pillar 13), add one flat growth line, never a score. On a `lapsed`/`partial`, use the absolve-not-pity register (grammar oath): normal, owed nothing, here's the path forward. If the learner disputes a grade, send the dispute (their argument + original production) back to the assessor once; log the outcome either way — appeals are calibration data.
+
+## 5 · Capstone — **it is a NODE now, not a paragraph** (v0.8)
+
+For four releases this section said *"this is the point of the whole topic — do not let it silently not happen."* **It silently did not happen, every single time**, because it was a line of prose in a skill file, and a tutor running low on context drops a suggestion. It does not drop a DAG.
+
+So the capstone is now **a real node in the graph**. `add-topic` mints it, it `requires` every other concept, and it therefore unlocks *exactly* when the frontier empties — at which point `next` serves it like anything else. **You cannot skip it by forgetting it.**
+
+```bash
+python3 "$ENGRAM" next --topic <t>        # -> id: "capstone", once every concept is encoded
+```
+
+- **It gets NO provisional credit.** An ordinary node advances on a stashed-but-ungraded prerequisite (so you can keep teaching while the assessor works). The capstone does not: it is the claim that the learner can now *use* the topic, and serving it on mastery the assessor has not yet confirmed is exactly the unearned claim the constitution forbids. Settle the stash first.
+- **On a pre-v0.8 topic** (no capstone in the graph), `next` says so and hands you the command. Run it once; it is idempotent: `python3 "$ENGRAM" capstone --topic <t>`
+
+**When the capstone is done, the topic does not dead-end (v1.7).** Offer once, arrow-key: **extend this topic** (a new arc — deeper material on the same subject) / **a new topic** / **done for now**. On "extend", spawn the **engram-curriculum-architect** with the existing graph's claims plus what they now want to be able to do, and land it with:
+
+```bash
+python3 "$ENGRAM" add-topic --file <arc2.json> --extend
+```
+
+`--extend` adds **only new nodes** — every existing node keeps its schedule, its receipts and its state byte-for-byte, new nodes are stamped with their `arc`, and the capstone re-mints over the union so the build still requires everything. An id collision is refused rather than silently overwriting a node they have receipts for; if the architect returns one, ask it for a different id.
+
+**Serve it as an offer with a real "not now" that costs nothing.** Capstones are expensive and can feel like homework, and the two-minute review floor still outranks them — a learner who declines the build and clears their reviews is doing the *higher-value* thing. Do not nag on repeat.
+
+**What the build is:** a transfer artifact in their *real* world — a feature in their actual repo with `TODO(human)` on the load-bearing parts; a lesson they teach; an explorable they author; a memo arguing a position they have to defend. Grade it via the assessor against the capstone's rubric; the receipt gets `kind: transfer`, and it lands in `stats.transfer` — **never pooled into retention**, because *"the memory survived"* and *"the idea is mine"* are different claims backed by different evidence.
+
+## 6 · Book the return (v0.6 — the one step that decides whether any of this mattered)
+
+Everything above produces *encoding*. Encoding decays. **The single highest-leverage act left in the session is getting the learner to come back**, and the engine now measures whether they ever do (`adherence.loop_closure`). Engram's own author encoded seven concepts, never returned, and lost half of them on schedule — the loop has to be *booked*, not hoped for (`docs/08` §The exhibit).
+
+So, **once, at the close** — only if there is no `settings.commitment` already, and never twice in a session — ask one plain question and take their words:
+
+> *"When will you clear these? Give me a moment in your day, not a time."*
+
+Then store it verbatim:
+
+```bash
+python3 "$ENGRAM" commit --cue "<their moment, their words>" --action "<what they'll do>"
+# e.g. --cue "when I open the terminal in the morning" --action "I clear one review"
+```
+
+This is an **implementation intention** — the highest-effect-size adherence move in the literature that costs nothing and steers no one (Gollwitzer & Sheeran 2006: 94 tests, N > 8,000, **d = 0.65**, robust to publication-bias correction; `docs/07` §4).
+
+**One coaching move is allowed here, once, and only about the CUE (v1.3).** If their cue is a clock time (*"at 9pm"*), you may offer — in one line, declinable without comment — to anchor it to something that already happens instead: *"'after I make coffee' tends to stick better than a time — want it that way, or keep 9pm?"* Event cues build habits; time-based reminders measurably don't (Judah 2013; Stawarz/Renfree). Prefer *after* an existing routine over *before* one. **Whatever they answer is the commitment, verbatim.** Never re-raise it, never rewrite their words to be "better."
+
+The discipline, which is the whole point:
+- **It is their sentence, not yours.** Don't suggest one. Don't improve it. If they say *"probably tomorrow sometime,"* that is the commitment — store it as given.
+- **It is never enforced.** Engram does not remind, chase, or check up. The plan is shown back *at the moment it names* and nowhere else. This is not a reminder system.
+- **"No" is a complete answer.** Asked once, declined once, never asked again this session. `commit` is optional forever.
+- A learner who already has one is not asked again — read `model` first. (`commit` emits `age_days`; a plan older than ~28 days gets the *renewal* offer at `/review`'s or `/coach`'s close instead — keep / rephrase / drop, all equal, drop unremarked.)
+
+## 7 · Close
+
+```bash
+python3 "$ENGRAM" log-session --kind learn --mode <mode> --minutes <est> --items <n> --notes "<one line>"
+```
+
+End with the **receipt strip** (grammar file format), then exactly: one curiosity gap for the next node (a question, not a summary) + the next due date. When real progress was made, the strip may carry one momentum line from `stats.momentum` (durability added, or most-durable-now) — information, not a score (Pillar 13). No recap walls — the recap is their job, at review time.

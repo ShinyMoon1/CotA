@@ -16,11 +16,9 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: false,
-    allowedHosts: [
-      '.ngrok-free.app',
-      '.ngrok.io',
-      'localhost',
-    ],
+    // allowedHosts: true — dev-сервер доступен через любые туннели
+    // (trycloudflare/pinggy/ngrok выдают случайные домены)
+    allowedHosts: true,
     proxy: {
       // Dev-прокси: в Go-бэкенде нет префикса /api, поэтому rewrite
       // срезает его перед отправкой на :8080.

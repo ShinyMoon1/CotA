@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""
+Git smudge filter for AGENTS.md — prepends the Engram block on checkout.
+
+Reads stdin as BYTES (git-stored content, which should hold no block), reads the
+block template from .opencode/.engram-smudge-template, prepends it, writes bytes
+to stdout. No-op when the template is missing or a complete block is present.
+
+"Already present" is decided by find_block() below — byte-identical to the copy
+in opencode-engram-clean. v1.2.0 had the two make this call separately and they
+disagreed: clean wanted an opening AND a closing marker, smudge was satisfied by
+an opening one. A file carrying an unmatched open marker therefore never got its
+block back on checkout, and Engram's instructions silently stopped reaching the
+model — the very bug that release was cut to fix, one function over.
+"""
+import os
+import re
+import sys
+
+# --- BEGIN SHARED BLOCK LOCATOR ---
+# Kept BYTE-IDENTICAL between opencode-engram-clean and opencode-engram-smudge.
+# __tests__/git-filter.test.ts asserts that; do not edit one copy alone.
+#
+# Duplicated rather than imported on purpose. These scripts run inside git's
+# object path, and v1.2.0 proved what a crashing filter costs: git reports
+# "external filter failed", falls back to UNFILTERED content, and commits the
+# Engram block into the repository. An import is one more file that can be
+# missing, so the shared code is copied and a test forbids drift instead.
+#
+# Markers must be alone on their line; an inline mention is prose. `\r?$` so
+# CRLF files match without the document being normalised. The version is
+# OPTIONAL: a user who tidies the marker down to `<!-- engram -->` used to
+# make the filter blind to it, so the block was committed verbatim AND a
+# second copy prepended on checkout.
+OPEN_RE = re.compile(r"^<!-- engram(?: v.+?)? -->\r?$", re.MULTILINE)
+CLOSE_RE = re.compile(r"^<!-- /engram -->\r?$", re.MULTILINE)
+
+
+def decode(raw):
+    """Bytes -> str, lossless for arbitrary (even invalid) byte sequences."""
+    return raw.decode("utf-8", errors="surrogateescape")
+
+
+def encode(text):
+    """Inverse of decode(). encode(decode(b)) == b for every b."""
+    return text.encode("utf-8", errors="surrogateescape")
+
+
+def find_block(text):
+    """
+    Span of the complete Engram block, or None.
+
+    - The opening marker is the LAST one before the close, so a user who
+      documents Engram's own marker syntax above the block keeps their prose.
+    - The closing marker is the first one that HAS an opening marker before it.
+      Taking the first close outright made a stray close above the block turn
+      the filter into a no-op, committing the whole block verbatim.
+    """
+    opens = [m.start() for m in OPEN_RE.finditer(text)]
+    if not opens:
+        return None
+
+    for close in CLOSE_RE.finditer(text):
+        before = [o for o in opens if o < close.start()]
+        if not before:
+            continue
+        end = close.end()
+        if text[end:end + 2] == "\r\n":
+            end += 2
+        elif text[end:end + 1] == "\n":
+            end += 1
+        return before[-1], end
+
+    return None
+# --- END SHARED BLOCK LOCATOR ---
+
+TEMPLATE_PATH = os.path.join(".opencode", ".engram-smudge-template")
+
+
+def main():
+    raw = sys.stdin.buffer.read()
+    text = decode(raw)
+
+    if find_block(text) is not None or not os.path.isfile(TEMPLATE_PATH):
+        sys.stdout.buffer.write(raw)
+        return
+
+    with open(TEMPLATE_PATH, "rb") as fh:
+        template = decode(fh.read())
+
+    if not template:
+        sys.stdout.buffer.write(raw)
+        return
+
+    sys.stdout.buffer.write(encode(template + text if text else template))
+
+
+if __name__ == "__main__":
+    main()
